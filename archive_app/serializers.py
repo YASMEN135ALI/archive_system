@@ -1,84 +1,127 @@
 from rest_framework import serializers
-from .models import User
+from .models import (
+    User,
+    Permission,
+    GeneralSettings,
+    DocumentCategory,
+    Document,
+    DocumentStatus,
+    DocumentFiles,
+    ActivityLog
+)
 
+
+# ============================
+# User Serializer
+# ============================
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'user_id',
-            'name',
+            'id',
+            'username',
             'email',
-            'password',
             'role',
-            'is_active'
+            'is_active',
+            'created_at'
         ]
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
 
-from .models import Permission
 
+# ============================
+# Permission Serializer
+# ============================
 class PermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission
-        fields = [
-            'permission_id',
-            'role',
-            'can_add',
-            'can_edit',
-            'can_delete',
-            'can_archive',
-            'can_restore'
-        ]
+        fields = '__all__'
 
-from .models import GeneralSettings
 
+# ============================
+# General Settings Serializer
+# ============================
 class GeneralSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = GeneralSettings
-        fields = [
-            'setting_id',
-            'document_types',
-            'security_levels',
-            'archive_rules'
-        ]
+        fields = '__all__'
 
-from .models import Document
 
+# ============================
+# Document Category Serializer
+# ============================
+class DocumentCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DocumentCategory
+        fields = '__all__'
+
+
+# ============================
+# Document Serializer
+# ============================
 class DocumentSerializer(serializers.ModelSerializer):
+
+    # عرض اسم المستخدم بدل رقمه
+    owner = serializers.StringRelatedField()
+    created_by = serializers.StringRelatedField()
+
+    # عرض اسم التصنيف بدل رقمه
+    category = serializers.StringRelatedField()
+
     class Meta:
         model = Document
         fields = [
-            'document_id',
+            'id',
+            'reference_number',
             'title',
-            'type',
-            'owner',
+            'description',
+            'category',
             'security_level',
+            'status',
+            'owner',
+            'created_by',
+            'archive_date',
+            'attachment',
             'created_at',
-            'updated_at',
-            'attachment'
+            'updated_at'
         ]
 
-from .models import DocumentStatus
 
+# ============================
+# Document Status Serializer
+# ============================
 class DocumentStatusSerializer(serializers.ModelSerializer):
+
+    document = serializers.StringRelatedField()
+    updated_by = serializers.StringRelatedField()
+
     class Meta:
         model = DocumentStatus
-        fields = [
-            'status_id',
-            'document_id',
-            'status',
-            'updated_by',
-            'updated_at',
-            'notes'
-        ]
+        fields = '__all__'
 
-from .models import DocumentFiles
 
+# ============================
+# Document Files Serializer
+# ============================
 class DocumentFilesSerializer(serializers.ModelSerializer):
+
+    document = serializers.StringRelatedField()
+    uploaded_by = serializers.StringRelatedField()
+
     class Meta:
         model = DocumentFiles
-        fields = [
-            'file_id',
-            'document_id',
-            'file_path',
-            'uploaded_at',
-            'uploaded_by'
-        ]
+        fields = '__all__'
+
+
+# ============================
+# Activity Log Serializer
+# ============================
+class ActivityLogSerializer(serializers.ModelSerializer):
+
+    user = serializers.StringRelatedField()
+    document = serializers.StringRelatedField()
+
+    class Meta:
+        model = ActivityLog
+        fields = '__all__'

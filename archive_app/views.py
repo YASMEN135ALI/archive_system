@@ -1,284 +1,117 @@
-from django.shortcuts import render
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework import status
-from .models import User
-from .serializers import UserSerializer
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 
-# Create your views here.
-@api_view(['GET'])
-def get_users(request):
-    users = User.objects.all()
-    serializer = UserSerializer(users, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+from .models import (
+    User,
+    Permission,
+    GeneralSettings,
+    DocumentCategory,
+    Document,
+    DocumentStatus,
+    DocumentFiles,
+    ActivityLog
+)
 
-@api_view(['POST'])
-def add_user(request):
-    serializer = UserSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['PUT'])
-def update_user(request, user_id):
-    try:
-        user = User.objects.get(user_id=user_id)
-    except User.DoesNotExist:
-        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = UserSerializer(user, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['DELETE'])
-def delete_user(request, user_id):
-    try:
-        user = User.objects.get(user_id=user_id)
-    except User.DoesNotExist:
-        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    user.delete()
-    return Response({"message": "User deleted successfully"}, status=status.HTTP_200_OK)
-
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework import status
-from .models import Document
-from .serializers import DocumentSerializer
-
-@api_view(['GET'])
-def get_documents(request):
-    documents = Document.objects.all()
-    serializer = DocumentSerializer(documents, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['GET'])
-def get_document(request, document_id):
-    try:
-        document = Document.objects.get(document_id=document_id)
-    except Document.DoesNotExist:
-        return Response({"error": "Document not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = DocumentSerializer(document)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['POST'])
-def add_document(request):
-    serializer = DocumentSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['PUT'])
-def update_document(request, document_id):
-    try:
-        document = Document.objects.get(document_id=document_id)
-    except Document.DoesNotExist:
-        return Response({"error": "Document not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = DocumentSerializer(document, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['DELETE'])
-def delete_document(request, document_id):
-    try:
-        document = Document.objects.get(document_id=document_id)
-    except Document.DoesNotExist:
-        return Response({"error": "Document not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    document.delete()
-    return Response({"message": "Document deleted successfully"}, status=status.HTTP_200_OK)
-
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework import status
-from .models import DocumentFiles
-from .serializers import DocumentFilesSerializer
-
-@api_view(['GET'])
-def get_all_files(request):
-    files = DocumentFiles.objects.all()
-    serializer = DocumentFilesSerializer(files, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['GET'])
-def get_files_by_document(request, document_id):
-    files = DocumentFiles.objects.filter(document_id=document_id)
-    serializer = DocumentFilesSerializer(files, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['POST'])
-def add_file(request):
-    serializer = DocumentFilesSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['DELETE'])
-def delete_file(request, file_id):
-    try:
-        file = DocumentFiles.objects.get(file_id=file_id)
-    except DocumentFiles.DoesNotExist:
-        return Response({"error": "File not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    file.delete()
-    return Response({"message": "File deleted successfully"}, status=status.HTTP_200_OK)
+from .serializers import (
+    UserSerializer,
+    PermissionSerializer,
+    GeneralSettingsSerializer,
+    DocumentCategorySerializer,
+    DocumentSerializer,
+    DocumentStatusSerializer,
+    DocumentFilesSerializer,
+    ActivityLogSerializer
+)
 
 
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from rest_framework import status
-from .models import DocumentStatus
-from .serializers import DocumentStatusSerializer
-
-@api_view(['GET'])
-def get_all_status(request):
-    statuses = DocumentStatus.objects.all()
-    serializer = DocumentStatusSerializer(statuses, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['GET'])
-def get_status_by_document(request, document_id):
-    statuses = DocumentStatus.objects.filter(document_id=document_id)
-    serializer = DocumentStatusSerializer(statuses, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['POST'])
-def add_status(request):
-    serializer = DocumentStatusSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['PUT'])
-def update_status(request, status_id):
-    try:
-        status_obj = DocumentStatus.objects.get(status_id=status_id)
-    except DocumentStatus.DoesNotExist:
-        return Response({"error": "Status not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = DocumentStatusSerializer(status_obj, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['DELETE'])
-def delete_status(request, status_id):
-    try:
-        status_obj = DocumentStatus.objects.get(status_id=status_id)
-    except DocumentStatus.DoesNotExist:
-        return Response({"error": "Status not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    status_obj.delete()
-    return Response({"message": "Status deleted successfully"}, status=status.HTTP_200_OK)
-
-from .models import Permission
-from .serializers import PermissionSerializer
-@api_view(['GET'])
-def get_permissions(request):
-    permissions = Permission.objects.all()
-    serializer = PermissionSerializer(permissions, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['GET'])
-def get_permission_by_role(request, role):
-    permissions = Permission.objects.filter(role=role)
-    serializer = PermissionSerializer(permissions, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['POST'])
-def add_permission(request):
-    serializer = PermissionSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['PUT'])
-def update_permission(request, permission_id):
-    try:
-        permission = Permission.objects.get(permission_id=permission_id)
-    except Permission.DoesNotExist:
-        return Response({"error": "Permission not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = PermissionSerializer(permission, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['DELETE'])
-def delete_permission(request, permission_id):
-    try:
-        permission = Permission.objects.get(permission_id=permission_id)
-    except Permission.DoesNotExist:
-        return Response({"error": "Permission not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    permission.delete()
-    return Response({"message": "Permission deleted successfully"}, status=status.HTTP_200_OK)
-
-from .models import GeneralSettings
-from .serializers import GeneralSettingsSerializer
-
-@api_view(['GET'])
-def get_settings(request):
-    settings = GeneralSettings.objects.all()
-    serializer = GeneralSettingsSerializer(settings, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['GET'])
-def get_setting(request, setting_id):
-    try:
-        setting = GeneralSettings.objects.get(setting_id=setting_id)
-    except GeneralSettings.DoesNotExist:
-        return Response({"error": "Setting not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = GeneralSettingsSerializer(setting)
-    return Response(serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['POST'])
-def add_setting(request):
-    serializer = GeneralSettingsSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# ============================
+# User ViewSet
+# ============================
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
 
-@api_view(['PUT'])
-def update_setting(request, setting_id):
-    try:
-        setting = GeneralSettings.objects.get(setting_id=setting_id)
-    except GeneralSettings.DoesNotExist:
-        return Response({"error": "Setting not found"}, status=status.HTTP_404_NOT_FOUND)
+# ============================
+# Permission ViewSet
+# ============================
+class PermissionViewSet(viewsets.ModelViewSet):
+    queryset = Permission.objects.all()
+    serializer_class = PermissionSerializer
+    permission_classes = [IsAuthenticated]
 
-    serializer = GeneralSettingsSerializer(setting, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# ============================
+# General Settings ViewSet
+# ============================
+class GeneralSettingsViewSet(viewsets.ModelViewSet):
+    queryset = GeneralSettings.objects.all()
+    serializer_class = GeneralSettingsSerializer
+    permission_classes = [IsAuthenticated]
 
-@api_view(['DELETE'])
-def delete_setting(request, setting_id):
-    try:
-        setting = GeneralSettings.objects.get(setting_id=setting_id)
-    except GeneralSettings.DoesNotExist:
-        return Response({"error": "Setting not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    setting.delete()
-    return Response({"message": "Setting deleted successfully"}, status=status.HTTP_200_OK)
+# ============================
+# Document Category ViewSet
+# ============================
+class DocumentCategoryViewSet(viewsets.ModelViewSet):
+    queryset = DocumentCategory.objects.all()
+    serializer_class = DocumentCategorySerializer
+    permission_classes = [IsAuthenticated]
+
+
+# ============================
+# Document ViewSet
+# ============================
+class DocumentViewSet(viewsets.ModelViewSet):
+    queryset = Document.objects.all()
+    serializer_class = DocumentSerializer
+    permission_classes = [IsAuthenticated]
+
+    # فلترة حسب النوع أو الحالة أو مستوى السرية
+    def get_queryset(self):
+        queryset = Document.objects.all()
+
+        category = self.request.query_params.get('category')
+        status = self.request.query_params.get('status')
+        security = self.request.query_params.get('security_level')
+
+        if category:
+            queryset = queryset.filter(category__name=category)
+
+        if status:
+            queryset = queryset.filter(status=status)
+
+        if security:
+            queryset = queryset.filter(security_level=security)
+
+        return queryset
+
+
+# ============================
+# Document Status ViewSet
+# ============================
+class DocumentStatusViewSet(viewsets.ModelViewSet):
+    queryset = DocumentStatus.objects.all()
+    serializer_class = DocumentStatusSerializer
+    permission_classes = [IsAuthenticated]
+
+
+# ============================
+# Document Files ViewSet
+# ============================
+class DocumentFilesViewSet(viewsets.ModelViewSet):
+    queryset = DocumentFiles.objects.all()
+    serializer_class = DocumentFilesSerializer
+    permission_classes = [IsAuthenticated]
+
+
+# ============================
+# Activity Log ViewSet
+# ============================
+class ActivityLogViewSet(viewsets.ModelViewSet):
+    queryset = ActivityLog.objects.all()
+    serializer_class = ActivityLogSerializer
+    permission_classes = [IsAuthenticated]
